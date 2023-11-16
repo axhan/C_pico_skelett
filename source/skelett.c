@@ -14,12 +14,10 @@
 //@@@ Import system headers. @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 #include <assert.h>
 #include <stdint.h>
-#include <stdlib.h>
-#include <string.h>
 #include <sys/types.h>
 #include <time.h>
 
-
+#include "pico/stdlib.h"
 //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 //@@@ Forward declarations of functions defined in this file.@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
@@ -46,13 +44,34 @@ int main(void)
 	me_init();
 
 
-
-
-
-
-
 	tmp = m1_func1();
 	tmp2 = m2_func1();
+
+
+#ifndef PICO_DEFAULT_LED_PIN
+#warning blink example requires a board with a regular LED
+#else
+    const uint LED_PIN = PICO_DEFAULT_LED_PIN;
+    gpio_init(LED_PIN);
+    gpio_set_dir(LED_PIN, GPIO_OUT);
+    while (true) {
+        gpio_put(LED_PIN, 1);
+        sleep_ms(250);
+        gpio_put(LED_PIN, 0);
+        sleep_ms(250);
+    }
+#endif
+
+
+
+
+
+
+
+
+
+
+
 
 	me_finish();
 
