@@ -38,6 +38,7 @@ mbedtls available at /usr/share/pico-sdk/lib/mbedtls
 -- Generating done (0.1s)
 -- Build files have been written to: /mnt/ssd2p1/anders/Dropbox/projekt/C_pico_skelett/build
 ```
+
 ### Compile:
 ```console
 [anders@dat-stordator C_pico_skelett]$ ./rebuild
@@ -367,3 +368,13 @@ make[1]: Leaving directory '/mnt/ssd2p1/anders/Dropbox/projekt/C_pico_skelett/bu
 /usr/bin/cmake -E cmake_progress_start /mnt/ssd2p1/anders/Dropbox/projekt/C_pico_skelett/build/CMakeFiles 0
 ```
 
+### Resulting files:
+```console
+[anders@dat-stordator C_pico_skelett]$ file build/skelett.*
+build/skelett.bin:     data
+build/skelett.dis:     ASCII text
+build/skelett.elf:     ELF 32-bit LSB executable, ARM, EABI5 version 1 (SYSV), statically linked, with debug_info, not stripped
+build/skelett.elf.map: assembler source, ASCII text
+build/skelett.hex:     ASCII text, with CRLF line terminators
+build/skelett.uf2:     UF2 firmware image, family Raspberry Pi RP2040, address 0x10000000, 33 total blocks
+```
