@@ -1,0 +1,7 @@
+#!/bin/bash
+
+
+rm -fr build
+
+cmake -S . -B build -G "Unix Makefiles"
+
