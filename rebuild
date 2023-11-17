@@ -1,4 +1,3 @@
 #!/bin/bash
 
-cmake --build build
-
+PICO_SDK_PATH=~/src/pico-sdk cmake --build build

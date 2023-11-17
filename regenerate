@@ -3,5 +3,5 @@
 
 rm -fr build
 
-cmake -S . -B build -G "Unix Makefiles"
+cmake -S . -B build -G "Unix Makefiles" -DPICO_SDK_PATH=~/src/pico-sdk
 

@@ -1,14 +1,17 @@
-cmake_minimum_required(VERSION 3.23)
+cmake_minimum_required(VERSION 3.5...3.27)
 
-include(/usr/share/pico-sdk/pico_sdk_init.cmake)
 
-set(CMAKE_VERBOSE_MAKEFILE ON)
+#set(CMAKE_VERBOSE_MAKEFILE ON)
+set(CMAKE_VERBOSE_MAKEFILE OFF)
+set(CMAKE_WARN_DEPRECATED OFF CACHE BOOL "" FORCE)
 
 #set(CMAKE_C_COMPILER gcc)
 #set(CMAKE_BUILD_TYPE "Release")
 
+include(~/src/pico-sdk/pico_sdk_init.cmake)
 
-add_compile_options(-Wall -Wno-unused -Wmisleading-indentation)
+
+add_compile_options(-Wall -Wno-unused -Wmisleading-indentation -Wno-strict-aliasing)
 
 #if(CMAKE_C_COMPILER STREQUAL gcc)
 #    add_compile_options(-Wno-empty-body -Wno-format)
