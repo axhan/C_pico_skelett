@@ -34,19 +34,6 @@
 //@@@ main() function. @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 int main(void)
 {
-	uint8_t		tmp, tmp2;
-
-	gl_init();
-	globals.debug_level = 1;
-	globals.debug_colored = true;
-
-	tm_init();
-	me_init();
-
-
-	tmp = m1_func1();
-	tmp2 = m2_func1();
-
 
 #ifndef PICO_DEFAULT_LED_PIN
 #warning blink example requires a board with a regular LED
@@ -62,20 +49,7 @@ int main(void)
     }
 #endif
 
-
-
-
-
-
-
-
-
-
-
-
-	me_finish();
-
-	return (int)(tmp + tmp2);
+	return 0;	// Never reached.
 }
 
 //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
