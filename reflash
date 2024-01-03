@@ -1,0 +1,6 @@
+#!/bin/bash
+
+# On my dev machine picotool's first try to reset the Pico in bootsel mode always fails, while the
+# second try always succeeds, so rather than going crazy trying to investigate this weird behaviour # we simply run the command twice.
+picotool load -x build/skelett.uf2 -f
+picotool load -x build/skelett.uf2 -f
