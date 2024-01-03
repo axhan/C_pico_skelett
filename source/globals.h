@@ -18,20 +18,19 @@
 
 
 //@@@ Type declarations. @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+
 typedef struct {
 	uint32_t	a;
 	uint32_t	b;
 	uint8_t		c;
 	uint8_t		d;
-	uint8_t		debug_level;	// [0, 1]
-	bool		debug_colored;	// [0, 1]
 } gl_Globals_t;
 
 
 //@@@ File scope global variables. @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
 
-//@@@ Function declarations. @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+//@@@ Function and global variable declarations. @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
 // Preprocessor logic to check if function declarations need 'extern' attribute.
 // (The Makefile invokes compiler with e.g. clang -DSRC_FILE_foo -c srcdir/foo.c -o builddir/foo.o")

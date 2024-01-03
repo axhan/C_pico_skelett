@@ -7,7 +7,7 @@
 
 
 /*
- * Prefix:	CF_	cf_
+ * Prefix:	CF_	cf_ cf
  */
 
 
@@ -18,16 +18,24 @@
 
 
 //@@@ Defines. @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-#define CF_HAVEPRINTF				false		// Compile for platform that has printf().
-#define CF_DEFAULT_COLOREDPRINTF	true		// Print debug output with colors.
-#define CF_DEFAULT_DEBUGLEVEL		1			// Default debuglevel [0, 1].
-#define CF_MEM_DUMP					false		// Compile-in debug dump in memory.c
-#define CF_MEM_DUMPFRAGCHARS		(80*25)		// Size of mem frag display in characters.
-#define CF_MEM_DUMPFRAG_FREE		"🞎"			// Char to represent free memory.
-#define CF_MEM_DUMPFRAG_USED		"🞕"			// Char to represent used memory.
-#define CF_MEM_POOLSIZE				100000		// Size of memory pool in bytes.
-#define CF_MEM_SPINLOCK				true		// Compile-in spinlock protection support
-												// in memory.c
+#define cfBUTT_GPIOS			{22}	// GPIO nums of buttons, e.g. {22, 23, 24}
+#define cfNUM_BUTT				sizeof((uint8_t[])cfBUTT_GPIOS)/sizeof(uint8_t)
+#define cfINPUT_QUEUE_LEN		100
+
+#define cfBUTT_DBOUNCE_MIN		20		// Minimum number of identical gpio reads in a row
+										// before a button is deemed debounced. <= 64 !
+#define cfINPUT_POLL_HZ			1000	// Frequency at which the callback in input.c is run.
+#define cfBUTT_REPT_HZ			10		// Button repeat rate in Hz.
+#define cfBUTT_REPT_DELAY		400		// Button repeat delay in ms.
+
+#define cfDEBUG					true	// Debug mode.
+
+// Number of times the callback must run between repetitions of repeating buttons.
+//#define cfBUTT_REPT_INTVAL		(uint16_t)(cfINPUT_POLL_HZ / cfBUTT_REPT_HZ)
+
+// Number of callback runs required before held buttons start repeating.
+//#define cfBUTT_REPT_THRES		(uint16_t)((1000*cfBUTT_REPT_DELAY)/(1000000/cfINPUT_POLL_HZ))
+
 //@@@ Function declarations. @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
 // Preprocessor logic to check if function declarations need 'extern' attribute.
@@ -42,6 +50,14 @@
 
 #undef F_EXT_ATTRIB
 #undef SRC_FILE_config
+
+#define XSTR(x) STR(x)
+#define STR(x) #x
+
+//The value of a macro can then be displayed with:
+
+//#pragma message "intval: " XSTR(cfBUTT_REPT_INTVAL)
+//#pragma message "thres: " XSTR(cfBUTT_REPT_THRES)
 
 
 //@@@ Include guard. @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@

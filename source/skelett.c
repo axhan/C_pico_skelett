@@ -4,23 +4,30 @@
 #include "config.h"
 #include "debug.h"
 #include "globals.h"
-#include "memory.h"
+#include "input.h"
 #include "module1.h"
 #include "module2.h"
-#include "timer.h"
 
+//#include "FreeMonoOblique12pt7b.h"
+#include "hw.h"
+#include "ST7735_TFT.h"
+#include "hardware/gpio.h"
+#include "hardware/spi.h"
 
 //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 //@@@ Import system headers. @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-#include <assert.h>
+//#include "pico/assert.h"
 #include <stdint.h>
-#include <sys/types.h>
-#include <time.h>
+#include <stdio.h>
+#include <pico/types.h>
+//#include <time.h>
 
 #include "pico/stdlib.h"
 //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-//@@@ Forward declarations of functions defined in this file.@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+//@@@ Private function declarations. @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
+char* int64_to_str0b(uint64_t lld);
+void setup_gpios(void);
 
 //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 //@@@ Global variables. @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
@@ -34,27 +41,100 @@
 //@@@ main() function. @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 int main(void)
 {
+	extern uint64_t elapsed_ticks;
+	in_Event_t event;
 
-#ifndef PICO_DEFAULT_LED_PIN
-#warning blink example requires a board with a regular LED
-#else
-    const uint LED_PIN = PICO_DEFAULT_LED_PIN;
-    gpio_init(LED_PIN);
-    gpio_set_dir(LED_PIN, GPIO_OUT);
-    while (true) {
-        gpio_put(LED_PIN, 1);
-        sleep_ms(250);
-        gpio_put(LED_PIN, 0);
-        sleep_ms(250);
-    }
-#endif
+	setup_gpios();
+	stdio_usb_init();
+	gl_init();
+	in_init();
+
+	sleep_ms(1000);
+	spi_init(spi0, 1000000);
+	tft_spi_init();
+	sleep_ms(1000);
+	// TFT_ST7735B_Initialize();
+	TFT_BlackTab_Initialize();
+
+	sleep_ms(1000);
+
+
+
+	setRotation(0);
+	// tft_width=160; tft_height=128;
+	setTextWrap(true);
+
+
+	fillScreen(ST7735_BLACK);
+	drawText(0, 5, " !#$%&'()*+,-.", ST7735_WHITE, ST7735_BLACK, 1);
+	drawText(0, 15, "0123456789",  ST7735_BLUE, ST7735_BLACK, 1);
+	drawText(0, 25, "abcdefghijklmn", ST7735_RED, ST7735_BLACK, 1);
+	drawText(0, 35, "ABCDEGHIJKLMN", ST7735_GREEN, ST7735_BLACK, 1);
+	drawText(0, 45, "opqrstuvwxyz", ST7735_CYAN, ST7735_BLACK, 1);
+	drawText(0, 55, "OPQRSTUVWYXZ", ST7735_MAGENTA, ST7735_BLACK, 1);
+	drawText(0, 65, ";:=,.?@", ST7735_YELLOW, ST7735_BLACK, 1);
+	drawText(0, 75, "[]/", ST7735_BLACK, ST7735_WHITE, 1);
+
+	do {
+//		printf("%lld Bajs nr %d\n", elapsed_ticks, (int)gpio_get(22));
+
+		while (in_get_pending(&event)) {
+			in_dump(&event);
+		}
+
+//		gpio_put(LED_PIN, 1);
+//		sleep_ms(500);
+
+		// fillScreen(ST7735_RED);
+//		gpio_put(LED_PIN, 0);
+		sleep_ms(50);
+	} while (true);
 
 	return 0;	// Never reached.
 }
 
-//@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-//@@@ Other functions definitions. @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
+//@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+//@@@ Private function definitions. @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+
+char* int64_to_str0b(uint64_t lld)
+{
+	static char buf[65];
+	uint64_t mask = 0x8000000000000000;
+	for (uint8_t i = 0; i < 64; i++) {
+		buf[i] = (lld & mask) ? '1' : '0';
+		mask >>= 1;
+	}
+	return buf;
+}
+
+
+void setup_gpios(void)
+{
+	gpio_init(16);	// Display backlight
+	gpio_init(17);	// Display CS
+	gpio_init(20);	// Display A0/DC
+	gpio_init(21);	// Display RST
+	gpio_init(25);	// Onboard LED
+
+	gpio_set_dir(16, true); gpio_put(16, 1);
+	gpio_set_dir(17, true); gpio_put(17, 0);
+	gpio_set_dir(20, true); gpio_put(20, 0);
+	gpio_set_dir(21, true); gpio_put(21, 1);
+	gpio_set_dir(25, true);
+
+	for (uint8_t i = 0; i < cfNUM_BUTT; i++) {
+		gpio_init(in_gpios[i]);
+		gpio_set_function(in_gpios[i], GPIO_FUNC_SIO);
+		gpio_set_dir(in_gpios[i], false);
+		gpio_disable_pulls(in_gpios[i]);
+	}
+
+	gpio_set_function(4, GPIO_FUNC_SPI);	// SPI0 RX, unconnected
+	gpio_set_function(18, GPIO_FUNC_SPI);	// Display SCK
+	gpio_set_function(19, GPIO_FUNC_SPI);	// Display MOSI
+	return;
+}
 
 //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 //██████████████████████████████████████████████████████████████████████████████████████████████████
