@@ -5,9 +5,9 @@
 //@@@ Private type definitions. @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
 typedef struct {
-	uint16_t	held_ticks;
-	uint64_t	shift_reg;
-	bool		is_held;
+	uint16_t				ticks_held;
+	uint64_t				shift_reg;
+	enum { NONHELD, HELD }	actuation;
 } ButtonState_t;
 
 
@@ -39,8 +39,8 @@ void in_init(void)
 
 	for (uint8_t i = 0; i < cfNUM_BUTT; i++)
 	{
-		b_states[i].is_held = false;
-		b_states[i].held_ticks = 0;
+		b_states[i].actuation = NONHELD;
+		b_states[i].ticks_held = 0;
 		b_states[i].shift_reg = 0b10;
 	}
 
@@ -62,11 +62,11 @@ bool in_get_pending(in_Event_t* event)
 void in_dump(in_Event_t* event)
 {
 	if (event->type == evtRELEASE) {
-		printf("Button id %d up\n", (int)event->id);
+		printf("b%du ", (int)event->id);
 	} else if (event->type == evtPRESS) {
-		printf("Button id %d down\n", (int)event->id);
+		printf("b%dd ", (int)event->id);
 	} else if (event->type == evtREPEAT) {
-		printf("Button id %d rept\n", (int)event->id);
+		printf("b%dr ", (int)event->id);
 	} else {
 		;	// Never reached
 	}
@@ -77,25 +77,27 @@ void in_dump(in_Event_t* event)
 
 bool timer_callback(repeating_timer_t *rt)
 {
-	static const uint64_t	deb_mask = (ULLONG_MAX >> (64-cfBUTT_DBOUNCE_MIN));
+	// Bit-mask for the debouncing check. Set lower cfBUTT_CONSEC_MIN bits.
+	static constexpr uint64_t	deb_mask = (ULLONG_MAX >> (64-cfBUTT_CONSEC_MIN));
 
-	// Number of times the callback must run between repetitions of repeating buttons.
-	static const uint16_t	butt_rept_intval = (cfINPUT_POLL_HZ / cfBUTT_REPT_HZ);
-	static_assert(butt_rept_intval);
+	// Button repeat interval in unit "number of calls of this callback".
+	static constexpr uint16_t	b_rept_intval = (cfINPUT_POLL_HZ / cfBUTT_REPT_HZ);
 
-	// Number of callback runs required before held buttons start repeating.
-	static const uint16_t	butt_rept_thres = ((1000*cfBUTT_REPT_DELAY)/(1000000/cfINPUT_POLL_HZ));
-	static_assert(butt_rept_thres);
+	// Button repeat delay in unit "number of calls of this callback".
+	static constexpr uint16_t b_rept_thres = ((1000*cfBUTT_REPT_DELAY)/(1000000/cfINPUT_POLL_HZ));
+
+	static_assert(b_rept_intval);		// Prevent nasty fuck-ups during testing.
+	static_assert(b_rept_thres);		// Prevent nasty fuck-ups during testing.
 
 	in_Event_t				tmp_event;	// To be copied to queue, so needs only in-function scope.
 
 	for (uint8_t i = 0; i < cfNUM_BUTT; i++) {
-		b_states[i].shift_reg <<= 1;
-		b_states[i].shift_reg |= (uint64_t)(!gpio_get(in_gpios[i]));
+		// Shift in inverted (make active-high from active-low) GPIO read from the right.
+		b_states[i].shift_reg = (b_states[i].shift_reg << 1) | (uint64_t)(!gpio_get(in_gpios[i]));
 
 		if ((b_states[i].shift_reg & deb_mask) == 0) {	// Debounced as RELEASED.
-			if (b_states[i].is_held) {	// Known stored state is HELD.
-				b_states[i].is_held = false;	// Store state as RELEASED.
+			if (b_states[i].actuation == HELD) {	// Known stored state is HELD.
+				b_states[i].actuation = NONHELD;	// Store state as RELEASED.
 				tmp_event.id = in_gpios[i];
 				tmp_event.type = evtRELEASE;
 				queue_try_add(&event_queue, &tmp_event);	// Enqueue RELEASE event.
@@ -103,20 +105,22 @@ bool timer_callback(repeating_timer_t *rt)
 				;		// hence has already been enqueued once, do nothing.
 			}
 		} else if ((b_states[i].shift_reg & deb_mask) == deb_mask) {	// Debounced as HELD.
-			if (b_states[i].is_held) {	// Known stored state is already HELD. Calc repeat:
-				b_states[i].held_ticks += 1;	// Increase "button-down duration" counter.
-				if (b_states[i].held_ticks >= butt_rept_thres) {
-					b_states[i].held_ticks = (butt_rept_thres - butt_rept_intval);
+			if (b_states[i].actuation == HELD) {	// Known stored state is already HELD,
+				b_states[i].ticks_held += 1;		// increase "button-down duration" counter.
+				if (b_states[i].ticks_held >= b_rept_thres) {
+					b_states[i].ticks_held = (b_rept_thres - b_rept_intval);
 					tmp_event.id = in_gpios[i];
 					tmp_event.type = evtREPEAT;
 					queue_try_add(&event_queue, &tmp_event);	// Enqueue REPEAT event.
 				}
-			} else {	// Known stored state is RELEASED.
-				b_states[i].is_held = true;	// Store state as HELD.
-				b_states[i].held_ticks = 0;
+			} else if (b_states[i].actuation == NONHELD) {	// Known stored state is RELEASED.
+				b_states[i].actuation = HELD;	// Store state as HELD.
+				b_states[i].ticks_held = 0;
 				tmp_event.id = in_gpios[i];
 				tmp_event.type = evtPRESS;
 				queue_try_add(&event_queue, &tmp_event);	// Enqueue PRESS event.
+			} else {
+				;	// Never reached.
 			}
 		} else {
 			;	// Not debounced, lowest CF_BUTTONS_DEBOUNCE_THRES of shift-reg stream

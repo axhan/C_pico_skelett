@@ -17,6 +17,7 @@
 
 //@@@ Import system headers needed in input.h + input.c @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 #include "hardware/gpio.h"
+#include "hardware/timer.h"
 #include "limits.h"
 #include <pico/time.h>
 #include <pico/types.h>

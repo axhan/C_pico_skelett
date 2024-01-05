@@ -22,7 +22,7 @@
 #define cfNUM_BUTT				sizeof((uint8_t[])cfBUTT_GPIOS)/sizeof(uint8_t)
 #define cfINPUT_QUEUE_LEN		100
 
-#define cfBUTT_DBOUNCE_MIN		20		// Minimum number of identical gpio reads in a row
+#define cfBUTT_CONSEC_MIN		20		// Minimum number of identical consecutive gpio reads
 										// before a button is deemed debounced. <= 64 !
 #define cfINPUT_POLL_HZ			1000	// Frequency at which the callback in input.c is run.
 #define cfBUTT_REPT_HZ			10		// Button repeat rate in Hz.

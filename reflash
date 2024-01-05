@@ -1,6 +1,7 @@
 #!/bin/bash
 
 # On my dev machine picotool's first try to reset the Pico in bootsel mode always fails, while the
-# second try always succeeds, so rather than going crazy trying to investigate this weird behaviour # we simply run the command twice.
+# second try always succeeds, so rather than going crazy trying to investigate this weird behaviour # I simply run the command twice. The first will fail, the second will succeed.
+
 picotool load -x build/skelett.uf2 -f
 picotool load -x build/skelett.uf2 -f

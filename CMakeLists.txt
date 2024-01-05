@@ -1,7 +1,13 @@
 cmake_minimum_required(VERSION 3.5...3.27)
 
-set(CMAKE_VERBOSE_MAKEFILE OFF)
-set(CMAKE_WARN_DEPRECATED OFF CACHE BOOL "" FORCE)
+set(CMAKE_VERBOSE_MAKEFILE	OFF)
+set(CMAKE_WARN_DEPRECATED	OFF CACHE BOOL "" FORCE)
+set(PICO_SDK_PATH			~/src/pico-sdk)
+set(PICO_BOARD				pico)
+set(PICO_PLATFORM			rp2040)
+set(PICO_STDIO_DEFAULT_CRLF	1)
+set(PICO_STDIO_USB			1)
+
 
 include(~/src/pico-sdk/pico_sdk_init.cmake)
 
@@ -44,12 +50,15 @@ target_link_libraries(st7735	hardware_gpio
 								pico_time
 )
 
-target_link_libraries(skelett	st7735
+target_link_libraries(skelett	hardware_gpio
+								hardware_spi
+								hardware_timer
 								pico_bootsel_via_double_reset
 								pico_stdio_usb
 								pico_stdlib
-								pico_util
 								pico_time
+								pico_util
+								st7735
 )
 
 pico_add_extra_outputs(skelett)
