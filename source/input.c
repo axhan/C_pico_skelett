@@ -5,7 +5,7 @@
 //@@@ Private type definitions. @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
 typedef struct {
-	uint16_t				ticks_held;
+	uint16_t				time_held;
 	uint64_t				bitstream;
 	enum { NONHELD, HELD }	actuation;
 } ButtonState_t;
@@ -40,7 +40,7 @@ void in_init(void)
 	for (uint8_t i = 0; i < cfNUM_BUTT; i++)
 	{
 		b_states[i].actuation = NONHELD;
-		b_states[i].ticks_held = 0;
+		b_states[i].time_held = 0;
 		b_states[i].bitstream = 0b10;
 	}
 
@@ -107,16 +107,16 @@ bool timer_callback(repeating_timer_t *rt)
 			}
 		} else if ((b_states[i].bitstream & deb_mask) == deb_mask) {	// Debounced as HELD.
 			if (b_states[i].actuation == HELD) {	// Known stored state is already HELD,
-				b_states[i].ticks_held += 1;	// increase "button-down duration" counter.
-				if (b_states[i].ticks_held >= b_rept_thres) {
-					b_states[i].ticks_held = (b_rept_thres - b_rept_intval);
+				b_states[i].time_held += 1;	// increase "button-down duration" counter.
+				if (b_states[i].time_held >= b_rept_thres) {
+					b_states[i].time_held = (b_rept_thres - b_rept_intval);
 					tmp_event.id = in_gpios[i];
 					tmp_event.type = evtREPEAT;
 					queue_try_add(&event_queue, &tmp_event);	// Enqueue REPEAT event.
 				}
 			} else if (b_states[i].actuation == NONHELD) {	// Known stored state is RELEASED.
 				b_states[i].actuation = HELD;	// Store state as HELD.
-				b_states[i].ticks_held = 0;
+				b_states[i].time_held = 0;
 				tmp_event.id = in_gpios[i];
 				tmp_event.type = evtPRESS;
 				queue_try_add(&event_queue, &tmp_event);	// Enqueue PRESS event.
