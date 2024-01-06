@@ -26,7 +26,7 @@
 //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 //@@@ Private function declarations. @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
-char* int64_to_str0b(uint64_t lld);
+char* uint64_to_str0b(uint64_t lld);
 void setup_gpios(void);
 
 //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
@@ -76,19 +76,11 @@ int main(void)
 	drawText(0, 65, ";:=,.?@", ST7735_YELLOW, ST7735_BLACK, 1);
 	drawText(0, 75, "[]/", ST7735_BLACK, ST7735_WHITE, 1);
 
+	// Main event handling loop.
 	do {
-//		printf("%lld Bajs nr %d\n", elapsed_ticks, (int)gpio_get(22));
-
 		while (in_get_pending(&event)) {
 			in_dump(&event);
 		}
-
-//		gpio_put(LED_PIN, 1);
-//		sleep_ms(500);
-
-		// fillScreen(ST7735_RED);
-//		gpio_put(LED_PIN, 0);
-		sleep_ms(50);
 	} while (true);
 
 	return 0;	// Never reached.
@@ -99,8 +91,8 @@ int main(void)
 //@@@ Private function definitions. @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
 
-
-char* int64_to_str0b(uint64_t lld)
+// Return string representation in binary of a uint64_t
+char* uint64_to_str0b(uint64_t lld)
 {
 	static char buf[65];
 	uint64_t mask = 0x8000000000000000;
