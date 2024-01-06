@@ -13,15 +13,15 @@ typedef struct {
 
 //@@@ Public global variables (that have declarations in input.h). @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
-const uint8_t		in_gpios[] = cfBUTT_GPIOS;
+const uint8_t				in_gpios[] = cfBUTT_GPIOS;
 
 
 //@@@ Global variables. @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
-ButtonState_t		b_states[cfNUM_BUTT];
-uint64_t			elapsed_ticks;
-queue_t				event_queue;
-repeating_timer_t	rep_timer;
+ButtonState_t				b_states[cfNUM_BUTT];
+uint64_t					total_callback_calls;
+queue_t						event_queue;
+repeating_timer_t			rep_timer;
 
 
 //@@@ Forward declarations of private functions. @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
@@ -70,6 +70,7 @@ void in_dump(in_Event_t* event)
 	} else {
 		;	// Never reached
 	}
+	return;
 }
 
 
@@ -86,8 +87,8 @@ bool timer_callback(repeating_timer_t *rt)
 	// Button repeat delay in unit "number of calls of this callback".
 	static constexpr uint16_t b_rept_thres = ((1000*cfBUTT_REPT_DELAY)/(1000000/cfINPUT_POLL_HZ));
 
-	static_assert(b_rept_intval);		// Prevent nasty fuck-ups during testing.
-	static_assert(b_rept_thres);		// Prevent nasty fuck-ups during testing.
+	static_assert(b_rept_intval);	// Prevent nasty fuck-ups during testing.
+	static_assert(b_rept_thres);	// Prevent nasty fuck-ups during testing.
 
 	in_Event_t tmp_event;	// To be copied to queue, so needs only in-function scope.
 
@@ -102,11 +103,11 @@ bool timer_callback(repeating_timer_t *rt)
 				tmp_event.type = evtRELEASE;
 				queue_try_add(&event_queue, &tmp_event);	// Enqueue RELEASE event.
 			} else {	// Known stored state is already RELEASED,
-				;		// hence has already been enqueued once, do nothing.
+				;	// hence has already been enqueued once, do nothing.
 			}
 		} else if ((b_states[i].bitstream & deb_mask) == deb_mask) {	// Debounced as HELD.
 			if (b_states[i].actuation == HELD) {	// Known stored state is already HELD,
-				b_states[i].ticks_held += 1;		// increase "button-down duration" counter.
+				b_states[i].ticks_held += 1;	// increase "button-down duration" counter.
 				if (b_states[i].ticks_held >= b_rept_thres) {
 					b_states[i].ticks_held = (b_rept_thres - b_rept_intval);
 					tmp_event.id = in_gpios[i];
@@ -122,11 +123,10 @@ bool timer_callback(repeating_timer_t *rt)
 			} else {
 				;	// Never reached.
 			}
-		} else {
-			;	// Not debounced, lowest CF_BUTTONS_DEBOUNCE_THRES of shift-reg stream
-				// not all identical.
+		} else {	// Not debounced, lowest (i.e. latest) CF_BUTTONS_DEBOUNCE_THRES number of
+			;	// bits of stored GPIO reads in bitstream not all identical.
 		}
 	}
-	++elapsed_ticks;
+	++total_callback_calls;	// Stat not used for anything yet.
 	return true;
 }

@@ -5,7 +5,6 @@
 
 //@@@ Notes. @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
-
 /*
  * Prefix:	CF_	cf_ cf
  */
@@ -16,25 +15,29 @@
 
 //@@@ Import system headers needed in config.h + config.c @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
+#include <assert.h>
+#include <pico/types.h>
+#include <stdint.h>
+
 
 //@@@ Defines. @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-#define cfBUTT_GPIOS			{22}	// GPIO nums of buttons, e.g. {22, 23, 24}
-#define cfNUM_BUTT				sizeof((uint8_t[])cfBUTT_GPIOS)/sizeof(uint8_t)
-#define cfINPUT_QUEUE_LEN		100
 
-#define cfBUTT_CONSEC_MIN		20		// Minimum number of identical consecutive gpio reads
-										// before a button is deemed debounced. <= 64 !
-#define cfINPUT_POLL_HZ			1000	// Frequency at which the callback in input.c is run.
-#define cfBUTT_REPT_HZ			10		// Button repeat rate in Hz.
-#define cfBUTT_REPT_DELAY		400		// Button repeat delay in ms.
+#define cfBUTT_GPIOS		{22}	// GPIO nums of buttons, e.g. {22, 23, 24}
+#define cfNUM_BUTT			sizeof((uint8_t[])cfBUTT_GPIOS)/sizeof(uint8_t)
+#define cfINPUT_QUEUE_LEN	100
 
-#define cfDEBUG					true	// Debug mode.
+#define cfBUTT_CONSEC_MIN	20		// Minimum number of identical consecutive gpio reads
+									// before a button is deemed debounced. <= 64 !
+#define cfINPUT_POLL_HZ		1000	// Frequency at which the callback in input.c is run.
+#define cfBUTT_REPT_HZ		10		// Button repeat rate in Hz.
+#define cfBUTT_REPT_DELAY	400		// Button repeat delay in ms.
 
-// Number of times the callback must run between repetitions of repeating buttons.
-//#define cfBUTT_REPT_INTVAL		(uint16_t)(cfINPUT_POLL_HZ / cfBUTT_REPT_HZ)
+#define cfDEBUG				true	// Debug mode.
 
-// Number of callback runs required before held buttons start repeating.
-//#define cfBUTT_REPT_THRES		(uint16_t)((1000*cfBUTT_REPT_DELAY)/(1000000/cfINPUT_POLL_HZ))
+
+// Some sanity checks in case of typos during trying out different values above.
+static_assert((cfBUTT_CONSEC_MIN > 0) && (cfBUTT_CONSEC_MIN <= 64));
+static_assert(cfNUM_BUTT > 0);
 
 //@@@ Function declarations. @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
