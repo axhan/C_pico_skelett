@@ -1,5 +1,5 @@
 # C_pico_skelett
-Skeleton project in C for Raspberry Pi Pico
+Skeleton project in C (using some C23 features) for Raspberry Pi Pico.
 
 
 ### Regenerate build files:
