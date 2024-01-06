@@ -6,7 +6,7 @@
 
 typedef struct {
 	uint16_t				ticks_held;
-	uint64_t				shift_reg;
+	uint64_t				bitstream;
 	enum { NONHELD, HELD }	actuation;
 } ButtonState_t;
 
@@ -41,7 +41,7 @@ void in_init(void)
 	{
 		b_states[i].actuation = NONHELD;
 		b_states[i].ticks_held = 0;
-		b_states[i].shift_reg = 0b10;
+		b_states[i].bitstream = 0b10;
 	}
 
 	if (!alarm_pool_add_repeating_timer_us(al_pool, (-1000000 / cfINPUT_POLL_HZ), \
@@ -89,13 +89,13 @@ bool timer_callback(repeating_timer_t *rt)
 	static_assert(b_rept_intval);		// Prevent nasty fuck-ups during testing.
 	static_assert(b_rept_thres);		// Prevent nasty fuck-ups during testing.
 
-	in_Event_t				tmp_event;	// To be copied to queue, so needs only in-function scope.
+	in_Event_t tmp_event;	// To be copied to queue, so needs only in-function scope.
 
 	for (uint8_t i = 0; i < cfNUM_BUTT; i++) {
 		// Shift in inverted (make active-high from active-low) GPIO read from the right.
-		b_states[i].shift_reg = (b_states[i].shift_reg << 1) | (uint64_t)(!gpio_get(in_gpios[i]));
+		b_states[i].bitstream = (b_states[i].bitstream << 1) | (uint64_t)(!gpio_get(in_gpios[i]));
 
-		if ((b_states[i].shift_reg & deb_mask) == 0) {	// Debounced as RELEASED.
+		if ((b_states[i].bitstream & deb_mask) == 0) {	// Debounced as RELEASED.
 			if (b_states[i].actuation == HELD) {	// Known stored state is HELD.
 				b_states[i].actuation = NONHELD;	// Store state as RELEASED.
 				tmp_event.id = in_gpios[i];
@@ -104,7 +104,7 @@ bool timer_callback(repeating_timer_t *rt)
 			} else {	// Known stored state is already RELEASED,
 				;		// hence has already been enqueued once, do nothing.
 			}
-		} else if ((b_states[i].shift_reg & deb_mask) == deb_mask) {	// Debounced as HELD.
+		} else if ((b_states[i].bitstream & deb_mask) == deb_mask) {	// Debounced as HELD.
 			if (b_states[i].actuation == HELD) {	// Known stored state is already HELD,
 				b_states[i].ticks_held += 1;		// increase "button-down duration" counter.
 				if (b_states[i].ticks_held >= b_rept_thres) {
