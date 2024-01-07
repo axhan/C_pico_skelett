@@ -43,7 +43,8 @@ typedef struct {
 // Preprocessor logic to check if function declarations need 'extern' attribute.
 // (The Makefile invokes compiler with e.g. clang -DSRC_FILE_foo -c srcdir/foo.c -o builddir/foo.o")
 #ifndef SRC_FILE_input
-	extern const uint8_t in_gpios[cfNUM_BUTT];
+	extern const uint8_t	in_gpios[cfNUM_BUTT];
+	extern uint64_t			in_total_callbacks;
 	#define F_EXT_ATTRIB	extern	// Importer is not input.c, declare functions extern
 #else
 	#define F_EXT_ATTRIB			// Importer is input.c, don't declare functions extern

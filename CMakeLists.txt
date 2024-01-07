@@ -27,8 +27,8 @@ add_library(st7735	source/lib-st7735/src/ST7735_TFT.c
 					source/lib-st7735/src/hw.c
 )
 
-target_compile_definitions(skelett PUBLIC	PICO_STDIO_USB_CONNECT_WAIT_TIMEOUT_MS=1000
-)
+#target_compile_definitions(skelett PUBLIC	PICO_STDIO_USB_CONNECT_WAIT_TIMEOUT_MS=1000
+#)
 
 target_compile_definitions(st7735 PUBLIC	SPI_TFT_PORT=spi0
 											PIN_TFT_CS=17
@@ -54,6 +54,7 @@ target_link_libraries(skelett	hardware_gpio
 								hardware_spi
 								hardware_timer
 								pico_bootsel_via_double_reset
+								pico_multicore
 								pico_stdio_usb
 								pico_stdlib
 								pico_time

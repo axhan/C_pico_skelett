@@ -19,6 +19,7 @@
 //#include "pico/assert.h"
 #include <stdint.h>
 #include <stdio.h>
+#include <pico/multicore.h>
 #include <pico/types.h>
 //#include <time.h>
 
@@ -38,19 +39,10 @@ void setup_gpios(void);
 
 
 //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-//@@@ main() function. @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-int main(void)
+//@@@ 2nd core main() function. @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+
+void core1_main(void)
 {
-
-	extern uint64_t elapsed_ticks;
-	in_Event_t event;
-
-	setup_gpios();
-	stdio_usb_init();
-	gl_init();
-	in_init();
-
-	sleep_ms(1000);
 	spi_init(spi0, 1000000);
 	tft_spi_init();
 	sleep_ms(1000);
@@ -59,12 +51,9 @@ int main(void)
 
 	sleep_ms(1000);
 
-
-
 	setRotation(0);
 	// tft_width=160; tft_height=128;
 	setTextWrap(true);
-
 
 	fillScreen(ST7735_BLACK);
 	drawText(0, 5, " !#$%&'()*+,-.", ST7735_WHITE, ST7735_BLACK, 1);
@@ -75,6 +64,28 @@ int main(void)
 	drawText(0, 55, "OPQRSTUVWYXZ", ST7735_MAGENTA, ST7735_BLACK, 1);
 	drawText(0, 65, ";:=,.?@", ST7735_YELLOW, ST7735_BLACK, 1);
 	drawText(0, 75, "[]/", ST7735_BLACK, ST7735_WHITE, 1);
+
+	do {
+		;
+	} while (true);
+
+}
+
+
+//@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+//@@@ main() function. @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+int main(void)
+{
+
+	in_Event_t		event;
+
+	setup_gpios();
+	stdio_usb_init();
+	stdio_init_all();
+	gl_init();
+	in_init();
+	multicore_launch_core1(core1_main);
+	sleep_ms(1000);
 
 	// Main event handling loop.
 	do {

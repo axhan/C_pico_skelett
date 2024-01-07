@@ -19,7 +19,7 @@ const uint8_t				in_gpios[] = cfBUTT_GPIOS;
 //@@@ Global variables. @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
 ButtonState_t				b_states[cfNUM_BUTT];
-uint64_t					total_callback_calls;
+uint64_t					in_total_callbacks;
 queue_t						event_queue;
 repeating_timer_t			rep_timer;
 
@@ -127,6 +127,6 @@ bool timer_callback(repeating_timer_t *rt)
 			;	// bits of stored GPIO reads in bitstream not all identical.
 		}
 	}
-	++total_callback_calls;	// Stat not used for anything yet.
+	++in_total_callbacks;	// Stat not used for anything yet.
 	return true;
 }
