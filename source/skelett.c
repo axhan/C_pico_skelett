@@ -9,10 +9,17 @@
 #include "module2.h"
 
 //#include "FreeMonoOblique12pt7b.h"
-#include "hw.h"
-#include "ST7735_TFT.h"
+//#include "FreeMonoOblique12pt_sub.h"
+//#include "hw.h"
+//#include "ST7735_TFT.h"
 #include "hardware/gpio.h"
 #include "hardware/spi.h"
+
+#include "gfx.h"
+#include "gfxfont.h"
+#include "font.h"
+#include "st7735.h"
+
 
 //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 //@@@ Import system headers. @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
@@ -43,18 +50,36 @@ void setup_gpios(void);
 
 void core1_main(void)
 {
-	spi_init(spi0, 1000000);
+	int c = 1;
+
+	// CS=16 A0/DC=20 RST=21 SCK=18 MOSI=19
+
+	LCD_setSPIperiph(spi0);
+	LCD_setPins(20, 17, 21, 18, 19);
+	LCD_initDisplay(INITR_18BLACKTAB);
+
+	LCD_setRotation(3);
+
+	GFX_createFramebuf();
+
+	while (true) {
+		GFX_clearScreen();
+		GFX_setCursor(0, 0);
+		GFX_printf("Hello GFX!\n%d", c++);
+		GFX_flush();
+		sleep_ms(50);
+
+	}
+
+/*	spi_init(spi0, 1000000);
 	tft_spi_init();
 	sleep_ms(1000);
-	// TFT_ST7735B_Initialize();
 	TFT_BlackTab_Initialize();
 
 	sleep_ms(1000);
 
 	setRotation(0);
-	// tft_width=160; tft_height=128;
 	setTextWrap(true);
-
 	fillScreen(ST7735_BLACK);
 	drawText(0, 5, " !#$%&'()*+,-.", ST7735_WHITE, ST7735_BLACK, 1);
 	drawText(0, 15, "0123456789",  ST7735_BLUE, ST7735_BLACK, 1);
@@ -64,7 +89,7 @@ void core1_main(void)
 	drawText(0, 55, "OPQRSTUVWYXZ", ST7735_MAGENTA, ST7735_BLACK, 1);
 	drawText(0, 65, ";:=,.?@", ST7735_YELLOW, ST7735_BLACK, 1);
 	drawText(0, 75, "[]/", ST7735_BLACK, ST7735_WHITE, 1);
-
+*/
 	do {
 		;
 	} while (true);
@@ -117,16 +142,17 @@ char* uint64_to_str0b(uint64_t lld)
 
 void setup_gpios(void)
 {
+// CS=17 A0/DC=20 RST=21 SCK=18 MOSI=19
 	gpio_init(16);	// Display backlight
-	gpio_init(17);	// Display CS
-	gpio_init(20);	// Display A0/DC
-	gpio_init(21);	// Display RST
+//	gpio_init(17);	// Display CS
+//	gpio_init(20);	// Display A0/DC
+//	gpio_init(21);	// Display RST
 	gpio_init(25);	// Onboard LED
 
 	gpio_set_dir(16, true); gpio_put(16, 1);
-	gpio_set_dir(17, true); gpio_put(17, 0);
-	gpio_set_dir(20, true); gpio_put(20, 0);
-	gpio_set_dir(21, true); gpio_put(21, 1);
+//	gpio_set_dir(17, true); gpio_put(17, 0);
+//	gpio_set_dir(20, true); gpio_put(20, 0);
+//	gpio_set_dir(21, true); gpio_put(21, 1);
 	gpio_set_dir(25, true);
 
 	for (uint8_t i = 0; i < cfNUM_BUTT; i++) {
@@ -137,8 +163,8 @@ void setup_gpios(void)
 	}
 
 	gpio_set_function(4, GPIO_FUNC_SPI);	// SPI0 RX, unconnected
-	gpio_set_function(18, GPIO_FUNC_SPI);	// Display SCK
-	gpio_set_function(19, GPIO_FUNC_SPI);	// Display MOSI
+//	gpio_set_function(18, GPIO_FUNC_SPI);	// Display SCK
+//	gpio_set_function(19, GPIO_FUNC_SPI);	// Display MOSI
 	return;
 }
 

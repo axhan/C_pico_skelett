@@ -1,5 +1,7 @@
 cmake_minimum_required(VERSION 3.5...3.27)
 
+set(CMAKE_C_STANDARD		23)
+set(CMAKE_CXX_STANDARD		17)
 set(CMAKE_VERBOSE_MAKEFILE	OFF)
 set(CMAKE_WARN_DEPRECATED	OFF CACHE BOOL "" FORCE)
 set(PICO_SDK_PATH			~/src/pico-sdk)
@@ -11,7 +13,13 @@ set(PICO_STDIO_USB			1)
 
 include(~/src/pico-sdk/pico_sdk_init.cmake)
 
-add_compile_options(-Wall -Wno-unused -Wmisleading-indentation -Wno-strict-aliasing)
+add_compile_options(	-Wall
+						-Wno-unused
+						-Wmisleading-indentation
+						-Wno-strict-aliasing
+						-Wno-format
+						-Wno-maybe-uninitialized
+)
 
 project(C_pico_skelett ASM C CXX)
 
@@ -23,32 +31,36 @@ set_target_properties(skelett	PROPERTIES	C_STANDARD 23
 											C_STANDARD_REQUIRED ON
 )
 
-add_library(st7735	source/lib-st7735/src/ST7735_TFT.c
-					source/lib-st7735/src/hw.c
+add_subdirectory(	pico-displayDrivs
+					pico-displayDrivs/build
 )
+
+#add_library(st7735	source/lib-st7735/src/ST7735_TFT.c
+#					source/lib-st7735/src/hw.c
+#)
 
 #target_compile_definitions(skelett PUBLIC	PICO_STDIO_USB_CONNECT_WAIT_TIMEOUT_MS=1000
 #)
 
-target_compile_definitions(st7735 PUBLIC	SPI_TFT_PORT=spi0
-											PIN_TFT_CS=17
-											PIN_TFT_DC=20
-											PIN_TFT_RST=21
-											TFT_ENABLE_RED
-											TFT_ENABLE_BLACK
-											TFT_ENABLE_GREEN
-											TFT_ENABLE_GENERIC
-											TFT_ENABLE_TEXT
-											TFT_ENABLE_RESET
-											TFT_ENABLE_SCROLL
-											TFT_ENABLE_SHAPES
-											TFT_ENABLE_ROTATE
-)
+#target_compile_definitions(st7735 PUBLIC	SPI_TFT_PORT=spi0
+#											PIN_TFT_CS=17
+#											PIN_TFT_DC=20
+#											PIN_TFT_RST=21
+#											TFT_ENABLE_RED
+#											TFT_ENABLE_BLACK
+#											TFT_ENABLE_GREEN
+#											TFT_ENABLE_GENERIC
+#											TFT_ENABLE_TEXT
+#											TFT_ENABLE_RESET
+#											TFT_ENABLE_SCROLL
+#											TFT_ENABLE_SHAPES
+#											TFT_ENABLE_ROTATE
+#)
 
-target_link_libraries(st7735	hardware_gpio
-								hardware_spi
-								pico_time
-)
+#target_link_libraries(st7735	hardware_gpio
+#								hardware_spi
+#								pico_time
+#)
 
 target_link_libraries(skelett	hardware_gpio
 								hardware_spi
@@ -60,6 +72,7 @@ target_link_libraries(skelett	hardware_gpio
 								pico_time
 								pico_util
 								st7735
+								gfx
 )
 
 pico_add_extra_outputs(skelett)
@@ -81,11 +94,13 @@ set_source_files_properties(source/module1.c 	PROPERTIES COMPILE_DEFINITIONS SRC
 set_source_files_properties(source/module2.c 	PROPERTIES COMPILE_DEFINITIONS SRC_FILE_module2)
 
 target_include_directories(skelett	BEFORE	PUBLIC
-												source
-												source/lib-st7735/include
+								source
+								pico-displayDrivs/st7735
+								pico-displayDrivs/gfx
+#												source/lib-st7735/include
 )
 
-target_include_directories(st7735	BEFORE	PUBLIC
-												source/lib-st7735/include
-)
+#target_include_directories(st7735	BEFORE	PUBLIC
+#												source/lib-st7735/include
+#)
 
