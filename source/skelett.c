@@ -48,7 +48,9 @@ void grad565(uint16_t from, uint16_t to, int16_t start_y, uint16_t steps);
 void core1_main(void)
 {
 	uint16_t c = 0;
-
+	uint64_t t_total = 0;
+	uint32_t t_iter = 0;
+	uint64_t t_now;
 
 	// CS=16 A0/DC=20 RST=21 SCK=18 MOSI=19
 	LCD_setSPIperiph(spi0);
@@ -63,15 +65,25 @@ void core1_main(void)
 	grad565(0b11111<<11, 0b11111, 0, 128);
 	GFX_flush();
 
-	GFX_setTextColor(0b1111011111000000);
-	GFX_setTextBack(0b11100);
 
 	do {
 //		GFX_clearScreen();
+		t_now = time_us_64();
+		GFX_setTextColor(0b1111111111100000);
+		GFX_setTextBack(0b11111);
+
+		GFX_setCursor(0, 0);
+		if (t_iter) {
+			GFX_printf("gfx: %lums avg", (uint32_t)(t_total/(1000*t_iter)));
+		}
 		GFX_setCursor(80-6*8, 60-8);
 		GFX_printf("%s", uint16_to_str0b(c++));
 		GFX_flush();
 //		sleep_ms(50);
+
+		++t_iter;
+		t_total += (time_us_64() - t_now);
+
 	} while (true);
 
 
