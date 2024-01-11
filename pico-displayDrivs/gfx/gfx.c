@@ -449,8 +449,10 @@ void GFX_printf(const char *format, ...)
 
 void GFX_createFramebuf()
 {
-	gfxFramebuffer = malloc(_width * _height * sizeof(uint16_t));
+//	gfxFramebuffer = malloc(_width * _height * sizeof(uint16_t));
+	gfxFramebuffer = calloc((size_t)1, _width * _height * sizeof(uint16_t));
 }
+
 void GFX_destroyFramebuf()
 {
 	free(gfxFramebuffer);

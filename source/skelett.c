@@ -8,17 +8,13 @@
 #include "module1.h"
 #include "module2.h"
 
-//#include "FreeMonoOblique12pt7b.h"
-//#include "FreeMonoOblique12pt_sub.h"
-//#include "hw.h"
-//#include "ST7735_TFT.h"
 #include "hardware/gpio.h"
 #include "hardware/spi.h"
 
+#include "st7735.h"
 #include "gfx.h"
 #include "gfxfont.h"
 #include "font.h"
-#include "st7735.h"
 
 
 //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
@@ -35,8 +31,9 @@
 //@@@ Private function declarations. @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
 char* uint64_to_str0b(uint64_t lld);
+char* uint16_to_str0b(uint16_t u);
 void setup_gpios(void);
-
+void grad565(uint16_t from, uint16_t to, int16_t start_y, uint16_t steps);
 //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 //@@@ Global variables. @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
@@ -50,10 +47,10 @@ void setup_gpios(void);
 
 void core1_main(void)
 {
-	int c = 1;
+	uint16_t c = 0;
+
 
 	// CS=16 A0/DC=20 RST=21 SCK=18 MOSI=19
-
 	LCD_setSPIperiph(spi0);
 	LCD_setPins(20, 17, 21, 18, 19);
 	LCD_initDisplay(INITR_18BLACKTAB);
@@ -61,38 +58,22 @@ void core1_main(void)
 	LCD_setRotation(3);
 
 	GFX_createFramebuf();
+	GFX_clearScreen();
 
-	while (true) {
-		GFX_clearScreen();
-		GFX_setCursor(0, 0);
-		GFX_printf("Hello GFX!\n%d", c++);
-		GFX_flush();
-		sleep_ms(50);
+	grad565(0b11111<<11, 0b11111, 0, 128);
+	GFX_flush();
 
-	}
+	GFX_setTextColor(0b1111011111000000);
+	GFX_setTextBack(0b11100);
 
-/*	spi_init(spi0, 1000000);
-	tft_spi_init();
-	sleep_ms(1000);
-	TFT_BlackTab_Initialize();
-
-	sleep_ms(1000);
-
-	setRotation(0);
-	setTextWrap(true);
-	fillScreen(ST7735_BLACK);
-	drawText(0, 5, " !#$%&'()*+,-.", ST7735_WHITE, ST7735_BLACK, 1);
-	drawText(0, 15, "0123456789",  ST7735_BLUE, ST7735_BLACK, 1);
-	drawText(0, 25, "abcdefghijklmn", ST7735_RED, ST7735_BLACK, 1);
-	drawText(0, 35, "ABCDEGHIJKLMN", ST7735_GREEN, ST7735_BLACK, 1);
-	drawText(0, 45, "opqrstuvwxyz", ST7735_CYAN, ST7735_BLACK, 1);
-	drawText(0, 55, "OPQRSTUVWYXZ", ST7735_MAGENTA, ST7735_BLACK, 1);
-	drawText(0, 65, ";:=,.?@", ST7735_YELLOW, ST7735_BLACK, 1);
-	drawText(0, 75, "[]/", ST7735_BLACK, ST7735_WHITE, 1);
-*/
 	do {
-		;
+//		GFX_clearScreen();
+		GFX_setCursor(80-6*8, 60-8);
+		GFX_printf("%s", uint16_to_str0b(c++));
+		GFX_flush();
+//		sleep_ms(50);
 	} while (true);
+
 
 }
 
@@ -127,6 +108,47 @@ int main(void)
 //@@@ Private function definitions. @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
 
+void grad565(uint16_t from, uint16_t to, int16_t start_y, uint16_t steps)
+{
+	constexpr int16_t width = 160;
+	constexpr int16_t height = 128;
+
+	int8_t from_R = (from >> 11);					// & 0b11111;
+	int8_t from_G = (from >> 5) & 0b111111;
+	int8_t from_B = from & 0b11111;
+	int8_t to_R = (to >> 11);						// & 0b11111;
+	int8_t to_G = (to >> 5) & 0b111111;
+	int8_t to_B = to & 0b11111;
+	int32_t diff_R, diff_G, diff_B;
+
+	if (steps == 128) {
+		diff_R = ((to_R - from_R) << (24-7));	// /128 equiv >>7
+		diff_G = ((to_G - from_G) << (24-7));
+		diff_B = ((to_B - from_B) << (24-7));
+	} else {
+		diff_R = ((to_R - from_R) << 24) / height;
+		diff_G = ((to_G - from_G) << 24) / height;
+		diff_B = ((to_B - from_B) << 24) / height;
+	}
+	int32_t scR = from_R << 24;
+	int32_t scG = from_G << 24;
+	int32_t scB = from_B << 24;
+	uint16_t R, G, B;
+
+	for (int16_t i = 0; i < (int16_t)steps; i++) {
+		R = ((scR >> 13) & 0b1111100000000000);
+		G = ((scG >> 19) & 0b0000011111100000);
+		B = ((scB >> 24));							// & 0b0000000000011111);
+
+//		printf("(%d,%d,%d) ", scR>>24, scG>>24, scB>>24);
+		GFX_drawFastHLine(0, i+start_y, width, (R|G|B));
+
+		scR += diff_R;
+		scG += diff_G;
+		scB += diff_B;
+	}
+}
+
 // Return string representation in binary of a uint64_t
 char* uint64_to_str0b(uint64_t lld)
 {
@@ -134,6 +156,19 @@ char* uint64_to_str0b(uint64_t lld)
 	uint64_t mask = 0x8000000000000000;
 	for (uint8_t i = 0; i < 64; i++) {
 		buf[i] = (lld & mask) ? '1' : '0';
+		mask >>= 1;
+	}
+	return buf;
+}
+
+
+// Return string representation in binary of a uint16_t
+char* uint16_to_str0b(uint16_t u)
+{
+	static char buf[17];
+	uint16_t mask = 0x8000;
+	for (uint8_t i = 0; i < 16; i++) {
+		buf[i] = (u & mask) ? '1' : '0';
 		mask >>= 1;
 	}
 	return buf;
