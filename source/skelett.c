@@ -143,14 +143,14 @@ void grad565(uint16_t from, uint16_t to, int16_t start_y, uint16_t steps)
 	int8_t to_B = to & 0b11111;
 	int32_t diff_R, diff_G, diff_B;
 
-	if (steps == 128) {
+	if (steps == height) {
 		diff_R = ((to_R - from_R) << (24-7));	// /128 equiv >>7
 		diff_G = ((to_G - from_G) << (24-7));
 		diff_B = ((to_B - from_B) << (24-7));
 	} else {
-		diff_R = ((to_R - from_R) << 24) / height;
-		diff_G = ((to_G - from_G) << 24) / height;
-		diff_B = ((to_B - from_B) << 24) / height;
+		diff_R = ((to_R - from_R) << 24) / steps;
+		diff_G = ((to_G - from_G) << 24) / steps;
+		diff_B = ((to_B - from_B) << 24) / steps;
 	}
 	int32_t scR = from_R << 24;
 	int32_t scG = from_G << 24;
