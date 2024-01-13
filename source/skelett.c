@@ -37,6 +37,7 @@ void grad565(uint16_t from, uint16_t to, int16_t start_y, uint16_t steps);
 //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 //@@@ Global variables. @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
+uint32_t	butt_count;
 
 //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 //@@@ Macros & defines. @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
@@ -74,8 +75,13 @@ void core1_main(void)
 
 		GFX_setCursor(0, 0);
 		if (t_iter) {
-			GFX_printf("gfx: %lums avg", (uint32_t)(t_total/(1000*t_iter)));
+			GFX_printf("gfx: %lums avg\n", (uint32_t)(t_total/(1000*t_iter)));
 		}
+		GFX_printf("inp: %uns avg\n", (uint32_t)(in_bench));
+		GFX_printf("but: %u\n", (uint32_t)(butt_count));
+
+//		GFX_setCursor(0, 2*8);
+//		GFX_printf("11111111112222222222333333");
 		GFX_setCursor(80-6*8, 60-8);
 		GFX_printf("%s", uint16_to_str0b(c++));
 		GFX_flush();
@@ -105,9 +111,14 @@ int main(void)
 	multicore_launch_core1(core1_main);
 	sleep_ms(1000);
 
+	butt_count	= 0;
+
 	// Main event handling loop.
 	do {
 		while (in_get_pending(&event)) {
+			if ((event.type == evtPRESS) || (event.type == evtREPEAT)) {
+				++butt_count;
+			}
 			in_dump(&event);
 		}
 	} while (true);
@@ -118,7 +129,6 @@ int main(void)
 
 //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 //@@@ Private function definitions. @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-
 
 void grad565(uint16_t from, uint16_t to, int16_t start_y, uint16_t steps)
 {
@@ -160,6 +170,7 @@ void grad565(uint16_t from, uint16_t to, int16_t start_y, uint16_t steps)
 		scB += diff_B;
 	}
 }
+
 
 // Return string representation in binary of a uint64_t
 char* uint64_to_str0b(uint64_t lld)

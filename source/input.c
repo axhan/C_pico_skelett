@@ -22,7 +22,7 @@ ButtonState_t				b_states[cfNUM_BUTT];
 uint64_t					in_total_callbacks;
 queue_t						event_queue;
 repeating_timer_t			rep_timer;
-
+uint32_t					in_bench;
 
 //@@@ Forward declarations of private functions. @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
@@ -78,6 +78,10 @@ void in_dump(in_Event_t* event)
 
 bool timer_callback(repeating_timer_t *rt)
 {
+	static uint64_t t_total;
+	static uint32_t t_iter;
+	uint64_t t_now = time_us_64();
+
 	// Bit-mask for the debouncing check. Set lower cfBUTT_CONSEC_MIN bits.
 	static constexpr uint64_t	deb_mask = (ULLONG_MAX >> (64-cfBUTT_CONSEC_MIN));
 
@@ -128,5 +132,8 @@ bool timer_callback(repeating_timer_t *rt)
 		}
 	}
 	++in_total_callbacks;	// Stat not used for anything yet.
+	t_total += (time_us_64() - t_now);
+	t_iter += 1;
+	in_bench = (uint32_t)((t_total * 1000) / t_iter);
 	return true;
 }

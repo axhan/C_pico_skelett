@@ -45,6 +45,7 @@ typedef struct {
 #ifndef SRC_FILE_input
 	extern const uint8_t	in_gpios[cfNUM_BUTT];
 	extern uint64_t			in_total_callbacks;
+	extern uint32_t			in_bench;
 	#define F_EXT_ATTRIB	extern	// Importer is not input.c, declare functions extern
 #else
 	#define F_EXT_ATTRIB			// Importer is input.c, don't declare functions extern
