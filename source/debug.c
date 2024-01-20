@@ -1,4 +1,5 @@
 //@@@ Import own header. @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+
 #include "debug.h"
 
 
@@ -6,7 +7,6 @@
 
 
 //@@@ Public functions (that have declarations in debug.h). @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-
 
 void db_noop(const char* fmt, ...)
 {

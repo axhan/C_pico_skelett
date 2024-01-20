@@ -2,6 +2,7 @@
 #define globals_H
 //@@@ Include guard. @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
+
 //@@@ Notes. @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
 /*
@@ -10,10 +11,12 @@
 
 
 //@@@ Import project headers needed in globals.h + globals.c @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+
 #include "config.h"
 
 
 //@@@ Import system headers needed in globals.h + globals.c @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+
 #include <stdint.h>
 
 

@@ -11,11 +11,13 @@
 
 
 //@@@ Import project headers needed in input.h + input.c @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+
 #include "config.h"
 #include "globals.h"
 
 
 //@@@ Import system headers needed in input.h + input.c @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+
 #include "hardware/gpio.h"
 #include "hardware/timer.h"
 #include "limits.h"
@@ -27,6 +29,7 @@
 
 
 //@@@ Type declarations. @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+
 typedef enum : uint8_t {
 	evtPRESS, evtRELEASE, evtREPEAT
 } in_EventType_t;

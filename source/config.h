@@ -39,6 +39,7 @@
 static_assert((cfBUTT_CONSEC_MIN > 0) && (cfBUTT_CONSEC_MIN <= 64));
 static_assert(cfNUM_BUTT > 0);
 
+
 //@@@ Function declarations. @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
 // Preprocessor logic to check if function declarations need 'extern' attribute.

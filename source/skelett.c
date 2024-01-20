@@ -1,6 +1,6 @@
-//██████████████████████████████████████████████████████████████████████████████████████████████████
 //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 //@@@ Import project headers. @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+
 #include "config.h"
 #include "debug.h"
 #include "globals.h"
@@ -8,9 +8,7 @@
 #include "module1.h"
 #include "module2.h"
 
-#include "hardware/gpio.h"
-#include "hardware/spi.h"
-
+// TFT library headers
 #include "st7735.h"
 #include "gfx.h"
 #include "gfxfont.h"
@@ -19,38 +17,43 @@
 
 //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 //@@@ Import system headers. @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-//#include "pico/assert.h"
+
+#include "hardware/gpio.h"
+#include "hardware/spi.h"
+#include <pico/multicore.h>
+#include "pico/stdlib.h"
+#include <pico/types.h>
 #include <stdint.h>
 #include <stdio.h>
-#include <pico/multicore.h>
-#include <pico/types.h>
-//#include <time.h>
 
-#include "pico/stdlib.h"
+
 //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 //@@@ Private function declarations. @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
-char* uint64_to_str0b(uint64_t lld);
-char* uint16_to_str0b(uint16_t u);
-void setup_gpios(void);
-void grad565(uint16_t from, uint16_t to, int16_t start_y, uint16_t steps);
+void	vertical_gradient(uint16_t from_color, uint16_t to_color, int16_t x, int16_t y, int16_t dx, int16_t dy);
+void	setup_gpios(void);
+char*	uint16_to_str0b(uint16_t u);
+char*	uint64_to_str0b(uint64_t lld);
+
+
 //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 //@@@ Global variables. @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
 uint32_t	butt_count;
 
+
 //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 //@@@ Macros & defines. @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-
+#define	RGB565(R, G, B)	(uint16_t)(((R & 31)<<11) | ((G & 63)<<5) | (B & 31))
 
 //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 //@@@ 2nd core main() function. @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
-void core1_main(void)
+[[noreturn]] void core1_main(void)
 {
 	uint16_t c = 0;
-	uint64_t t_total = 0;
 	uint32_t t_iter = 0;
+	uint64_t t_total = 0;
 	uint64_t t_now;
 
 	// CS=16 A0/DC=20 RST=21 SCK=18 MOSI=19
@@ -63,22 +66,23 @@ void core1_main(void)
 	GFX_createFramebuf();
 	GFX_clearScreen();
 
-	grad565(0b11111<<11, 0b11111, 0, 128);
+	vertical_gradient(RGB565(31, 0, 0), RGB565(0, 0, 31), 0, 0, 160, 128);
+	vertical_gradient(RGB565(0, 0, 31), RGB565(31, 0, 0), 80, 80, 40, 40);
 	GFX_flush();
 
 
 	do {
 //		GFX_clearScreen();
 		t_now = time_us_64();
-		GFX_setTextColor(0b1111111111100000);
-		GFX_setTextBack(0b11111);
+		GFX_setTextColor(RGB565(31, 63, 0));
+		GFX_setTextBack(RGB565(0, 0, 15));
 
 		GFX_setCursor(0, 0);
-		if (t_iter) {
-			GFX_printf("gfx: %lums avg\n", (uint32_t)(t_total/(1000*t_iter)));
+		if (t_iter) {	// Avoid /0
+			GFX_printf("gfx: %4lums avg\n", (uint32_t)(t_total/(1000*t_iter)));
 		}
-		GFX_printf("inp: %uns avg\n", (uint32_t)(in_bench));
-		GFX_printf("but: %u\n", (uint32_t)(butt_count));
+		GFX_printf("inp: %4luns avg\n", in_bench);
+		GFX_printf("but: %4lu\n", butt_count);
 
 //		GFX_setCursor(0, 2*8);
 //		GFX_printf("11111111112222222222333333");
@@ -91,17 +95,15 @@ void core1_main(void)
 		t_total += (time_us_64() - t_now);
 
 	} while (true);
-
-
 }
 
 
 //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 //@@@ main() function. @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-int main(void)
-{
 
-	in_Event_t		event;
+[[noreturn]] int main(void)
+{
+	in_Event_t event;
 
 	setup_gpios();
 	stdio_usb_init();
@@ -111,7 +113,7 @@ int main(void)
 	multicore_launch_core1(core1_main);
 	sleep_ms(1000);
 
-	butt_count	= 0;
+	butt_count = 0;
 
 	// Main event handling loop.
 	do {
@@ -122,48 +124,46 @@ int main(void)
 			in_dump(&event);
 		}
 	} while (true);
-
-	return 0;	// Never reached.
 }
 
 
 //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 //@@@ Private function definitions. @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
-void grad565(uint16_t from, uint16_t to, int16_t start_y, uint16_t steps)
+void vertical_gradient(uint16_t from_color, uint16_t to_color, int16_t x, int16_t y, int16_t dx, int16_t dy)
 {
-	constexpr int16_t width = 160;
-	constexpr int16_t height = 128;
+	static constexpr int16_t display_width = 160;
+	static constexpr int16_t display_height = 128;
 
-	int8_t from_R = (from >> 11);					// & 0b11111;
-	int8_t from_G = (from >> 5) & 0b111111;
-	int8_t from_B = from & 0b11111;
-	int8_t to_R = (to >> 11);						// & 0b11111;
-	int8_t to_G = (to >> 5) & 0b111111;
-	int8_t to_B = to & 0b11111;
-	int32_t diff_R, diff_G, diff_B;
+	int8_t from_R = (from_color >> 11);				// & 0b11111;
+	int8_t from_G = (from_color >> 5) & 0b111111;
+	int8_t from_B = from_color & 0b11111;
+	int8_t to_R = (to_color >> 11);					// & 0b11111;
+	int8_t to_G = (to_color >> 5) & 0b111111;
+	int8_t to_B = to_color & 0b11111;
+	uint32_t diff_R, diff_G, diff_B;				// Colour component change per step,
+													// scaled up by 2^24.
 
-	if (steps == height) {
-		diff_R = ((to_R - from_R) << (24-7));	// /128 equiv >>7
-		diff_G = ((to_G - from_G) << (24-7));
+	if (dy == display_height) {
+		diff_R = ((to_R - from_R) << (24-7));		// (n/128) ≍ (n>>7),
+		diff_G = ((to_G - from_G) << (24-7));		//		 1 clock cycle
 		diff_B = ((to_B - from_B) << (24-7));
 	} else {
-		diff_R = ((to_R - from_R) << 24) / steps;
-		diff_G = ((to_G - from_G) << 24) / steps;
-		diff_B = ((to_B - from_B) << 24) / steps;
+		diff_R = ((to_R - from_R) << 24) / dy;		// 8 clock cycles
+		diff_G = ((to_G - from_G) << 24) / dy;
+		diff_B = ((to_B - from_B) << 24) / dy;
 	}
-	int32_t scR = from_R << 24;
-	int32_t scG = from_G << 24;
-	int32_t scB = from_B << 24;
+	uint32_t scR = from_R << 24;
+	uint32_t scG = from_G << 24;
+	uint32_t scB = from_B << 24;
 	uint16_t R, G, B;
 
-	for (int16_t i = 0; i < (int16_t)steps; i++) {
+	for (int16_t i = 0; i < dy; i++) {
 		R = ((scR >> 13) & 0b1111100000000000);
 		G = ((scG >> 19) & 0b0000011111100000);
-		B = ((scB >> 24));							// & 0b0000000000011111);
+		B = ((scB >> 24));
 
-//		printf("(%d,%d,%d) ", scR>>24, scG>>24, scB>>24);
-		GFX_drawFastHLine(0, i+start_y, width, (R|G|B));
+		GFX_drawFastHLine(x, i+y, dx, (R|G|B));
 
 		scR += diff_R;
 		scG += diff_G;
@@ -226,5 +226,5 @@ void setup_gpios(void)
 	return;
 }
 
+
 //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-//██████████████████████████████████████████████████████████████████████████████████████████████████
