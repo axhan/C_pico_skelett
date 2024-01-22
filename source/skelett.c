@@ -30,7 +30,8 @@
 //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 //@@@ Private function declarations. @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
-void	vertical_gradient(uint16_t from_color, uint16_t to_color, int16_t x, int16_t y, int16_t dx, int16_t dy);
+void	linear_gradient(bool vertical, uint16_t from_color, uint16_t to_color,
+						  int16_t x, int16_t y, int16_t dx, int16_t dy);
 void	setup_gpios(void);
 char*	uint16_to_str0b(uint16_t u);
 char*	uint64_to_str0b(uint64_t lld);
@@ -66,8 +67,9 @@ uint32_t	butt_count;
 	GFX_createFramebuf();
 	GFX_clearScreen();
 
-	vertical_gradient(RGB565(31, 0, 0), RGB565(0, 0, 31), 0, 0, 160, 128);
-	vertical_gradient(RGB565(0, 0, 31), RGB565(31, 0, 0), 80, 80, 40, 40);
+	linear_gradient(true, RGB565(31, 0, 0), RGB565(0, 0, 31), 0, 0, 160, 128);
+	linear_gradient(true, RGB565(0, 0, 31), RGB565(31, 0, 0), 80, 80, 40, 40);
+	linear_gradient(false, RGB565(0, 63, 31), RGB565(31, 0, 31), 10, 80, 60, 40);
 	GFX_flush();
 
 
@@ -130,11 +132,13 @@ uint32_t	butt_count;
 //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 //@@@ Private function definitions. @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
-void vertical_gradient(uint16_t from_color, uint16_t to_color, int16_t x, int16_t y, int16_t dx, int16_t dy)
+void linear_gradient(bool vertical, uint16_t from_color, uint16_t to_color,
+					   int16_t x, int16_t y, int16_t dx, int16_t dy)
 {
 	static constexpr int16_t display_width = 160;
 	static constexpr int16_t display_height = 128;
 
+	int16_t dl = (vertical) ? dy : dx;
 	int8_t from_R = (from_color >> 11);				// & 0b11111;
 	int8_t from_G = (from_color >> 5) & 0b111111;
 	int8_t from_B = from_color & 0b11111;
@@ -144,26 +148,30 @@ void vertical_gradient(uint16_t from_color, uint16_t to_color, int16_t x, int16_
 	uint32_t diff_R, diff_G, diff_B;				// Colour component change per step,
 													// scaled up by 2^24.
 
-	if (dy == display_height) {
+	if (dl == display_height) {
 		diff_R = ((to_R - from_R) << (24-7));		// (n/128) ≍ (n>>7),
 		diff_G = ((to_G - from_G) << (24-7));		//		 1 clock cycle
 		diff_B = ((to_B - from_B) << (24-7));
 	} else {
-		diff_R = ((to_R - from_R) << 24) / dy;		// 8 clock cycles
-		diff_G = ((to_G - from_G) << 24) / dy;
-		diff_B = ((to_B - from_B) << 24) / dy;
+		diff_R = ((to_R - from_R) << 24) / dl;		// 8 clock cycles
+		diff_G = ((to_G - from_G) << 24) / dl;
+		diff_B = ((to_B - from_B) << 24) / dl;
 	}
 	uint32_t scR = from_R << 24;
 	uint32_t scG = from_G << 24;
 	uint32_t scB = from_B << 24;
 	uint16_t R, G, B;
 
-	for (int16_t i = 0; i < dy; i++) {
+	for (int16_t i = 0; i < dl; i++) {
 		R = ((scR >> 13) & 0b1111100000000000);
 		G = ((scG >> 19) & 0b0000011111100000);
 		B = ((scB >> 24));
 
-		GFX_drawFastHLine(x, i+y, dx, (R|G|B));
+		if (vertical) {
+			GFX_drawFastHLine(x, i+y, dx, (R|G|B));
+		} else {
+			GFX_drawFastVLine(x+i, y, dy, (R|G|B));
+		}
 
 		scR += diff_R;
 		scG += diff_G;
